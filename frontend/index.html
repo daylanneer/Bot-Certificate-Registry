@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOT Certificate Registry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-dim: rgba(139,92,246,0.15);
+  --bg: #0a0e17;
+  --card: #131a2b;
+  --border: #1e2a42;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --radius: 12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;line-height:1.6}
+a{color:var(--accent)}
+
+/* Layout */
+.container{max-width:1100px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--border);padding:16px 0}
+.header-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;font-size:1.25rem;font-weight:700}
+.logo-icon{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.header-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+
+/* Buttons */
+.btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#dc2626}
+.btn-sm{padding:6px 14px;font-size:.8rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* Status badge */
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+.badge-valid{background:rgba(16,185,129,.15);color:var(--success)}
+.badge-revoked{background:rgba(239,68,68,.15);color:var(--danger)}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px}
+.card h3{margin-bottom:16px;font-size:1.05rem;display:flex;align-items:center;gap:8px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:24px 0}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center}
+.stat-value{font-size:2rem;font-weight:700;color:var(--accent)}
+.stat-label{color:var(--text-dim);font-size:.85rem;margin-top:4px}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin:24px 0 16px;border-bottom:1px solid var(--border);padding-bottom:0;overflow-x:auto}
+.tab{padding:10px 20px;cursor:pointer;color:var(--text-dim);font-weight:600;font-size:.9rem;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Forms */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;margin-bottom:6px;font-size:.85rem;color:var(--text-dim);font-weight:600}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.9rem;outline:none;transition:.2s}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:80px;font-family:inherit}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* Certificate cards */
+.cert-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:12px;transition:.2s}
+.cert-card:hover{border-color:var(--accent)}
+.cert-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.cert-title{font-weight:700;font-size:1.05rem}
+.cert-id{color:var(--text-dim);font-size:.8rem}
+.cert-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.85rem;color:var(--text-dim)}
+.cert-meta span{display:flex;align-items:center;gap:4px}
+
+/* Transaction list */
+.tx-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.tx-item:last-child{border-bottom:none}
+.tx-action{font-weight:600}
+.tx-hash{color:var(--accent);font-family:monospace;font-size:.8rem}
+.tx-time{color:var(--text-dim);font-size:.8rem}
+
+/* Search */
+.search-box{position:relative;margin-bottom:16px}
+.search-box input{width:100%;padding:10px 14px 10px 38px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.9rem;outline:none}
+.search-box input:focus{border-color:var(--accent)}
+.search-box::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:.85rem}
+
+/* Notification */
+.toast{position:fixed;top:20px;right:20px;padding:14px 20px;border-radius:10px;font-size:.9rem;font-weight:600;z-index:1000;transform:translateX(120%);transition:.4s;max-width:400px}
+.toast.show{transform:translateX(0)}
+.toast-success{background:var(--success);color:#fff}
+.toast-error{background:var(--danger);color:#fff}
+.toast-info{background:var(--accent);color:#fff}
+
+/* Spinner */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Responsive */
+@media(max-width:640px){
+  .form-row{grid-template-columns:1fr}
+  .cert-meta{grid-template-columns:1fr}
+  .header-inner{flex-direction:column;align-items:flex-start}
+  .stats{grid-template-columns:1fr 1fr}
+}
+
+/* Empty state */
+.empty{text-align:center;padding:40px;color:var(--text-dim)}
+.empty-icon{font-size:2.5rem;margin-bottom:12px}
+
+/* Wallet address */
+.wallet-addr{font-family:monospace;font-size:.8rem;color:var(--accent);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ═══════════════════════════════════════════════
+   Landing Page — Numbered Credential Journey
+   ═══════════════════════════════════════════════ */
+:root{
+  --l-bg:#0a0e17;
+  --l-card:#131a2b;
+  --l-card2:#0e1420;
+  --l-text:#e6edf5;
+  --l-text2:#8b96a8;
+  --l-accent:#7c3aed;
+  --l-accent2:#a78bfa;
+  --l-border:rgba(255,255,255,.07);
+  --l-head:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --l-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+.reg-landing{background:var(--l-bg);color:var(--l-text);font-family:var(--l-body)}
+.reg-landing .reg-wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.reg-landing h1,.reg-landing h2,.reg-landing h3{font-family:var(--l-head)}
+
+/* Nav */
+.reg-nav{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--l-border)}
+.reg-nav .reg-wrap{display:flex;align-items:center;justify-content:space-between;height:68px}
+.reg-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:1.08rem;letter-spacing:-.01em;font-family:var(--l-head)}
+.reg-brand .reg-brand-seal{width:30px;height:30px;border-radius:50%;background:var(--l-accent);display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff}
+.reg-launch{background:var(--l-accent);color:#fff;border:none;padding:10px 20px;border-radius:9px;font-weight:600;font-size:.87rem;cursor:pointer;font-family:var(--l-body);transition:.2s}
+.reg-launch:hover{background:#6d28d9;transform:translateY(-1px);box-shadow:0 8px 22px rgba(124,58,237,.35)}
+
+/* Hero */
+.reg-hero{padding:96px 0 100px;position:relative;overflow:hidden}
+.reg-hero::before{content:'';position:absolute;top:-180px;right:-120px;width:640px;height:640px;background:radial-gradient(circle,rgba(124,58,237,.16),transparent 68%);pointer-events:none}
+.reg-hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:center;position:relative}
+.reg-kicker{display:inline-block;padding:6px 14px;border-radius:20px;background:var(--l-card);border:1px solid var(--l-border);color:var(--l-accent2);font-size:.7rem;font-weight:700;letter-spacing:.09em;margin-bottom:26px}
+.reg-hero h1{font-size:clamp(2.1rem,4.6vw,3.4rem);font-weight:700;letter-spacing:-.03em;line-height:1.12;margin-bottom:22px}
+.reg-hero h1 em{font-style:normal;color:var(--l-accent2)}
+.reg-hero p.reg-sub{max-width:520px;color:var(--l-text2);font-size:1.05rem;line-height:1.7;margin-bottom:34px}
+.reg-hero-ctas{display:flex;gap:12px;flex-wrap:wrap}
+.reg-btn-primary{background:var(--l-accent);color:#fff;border:none;padding:14px 26px;border-radius:10px;font-weight:600;font-size:.92rem;cursor:pointer;font-family:var(--l-body);transition:.2s}
+.reg-btn-primary:hover{background:#6d28d9;transform:translateY(-2px);box-shadow:0 10px 26px rgba(124,58,237,.38)}
+.reg-btn-ghost{background:transparent;color:var(--l-text);border:1px solid var(--l-border);padding:14px 26px;border-radius:10px;font-weight:600;font-size:.92rem;cursor:pointer;font-family:var(--l-body);transition:.2s}
+.reg-btn-ghost:hover{border-color:var(--l-accent2);color:var(--l-accent2)}
+
+/* Decorative certificate card visual */
+.reg-cert-stage{display:flex;justify-content:center;align-items:center;min-height:320px}
+.reg-cert-card{width:270px;background:linear-gradient(160deg,var(--l-card),var(--l-card2));border:1px solid var(--l-border);border-radius:16px;padding:26px 24px;transform:rotate(-6deg);box-shadow:0 30px 60px -20px rgba(0,0,0,.6),0 0 0 1px rgba(124,58,237,.06);position:relative}
+.reg-cert-card::before{content:'';position:absolute;inset:8px;border:1px dashed rgba(167,139,250,.25);border-radius:10px;pointer-events:none}
+.reg-cert-card .reg-cert-eyebrow{font-size:.62rem;letter-spacing:.14em;color:var(--l-text2);font-weight:700;margin-bottom:10px}
+.reg-cert-card .reg-cert-title{font-family:var(--l-head);font-size:1.02rem;font-weight:700;margin-bottom:6px;line-height:1.3}
+.reg-cert-card .reg-cert-id{font-size:.7rem;color:var(--l-text2);font-family:monospace;margin-bottom:18px}
+.reg-seal{width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 32% 28%,var(--l-accent2),var(--l-accent) 70%);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(124,58,237,.4);position:relative}
+.reg-seal::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px dotted rgba(167,139,250,.4)}
+.reg-seal svg{width:22px;height:22px}
+.reg-cert-card .reg-cert-foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+.reg-cert-card .reg-cert-status{font-size:.68rem;font-weight:700;color:#34d399;letter-spacing:.05em}
+.reg-cert-chip{position:absolute;top:-14px;right:-14px;width:60px;height:60px;border-radius:50%;background:var(--l-bg);border:2px solid var(--l-card);display:flex;align-items:center;justify-content:center;transform:rotate(6deg)}
+
+/* Section scaffolding */
+.reg-tag{color:var(--l-accent2);font-size:.75rem;font-weight:700;letter-spacing:.1em;margin-bottom:12px}
+.reg-landing section{padding:80px 0}
+
+/* Numbered journey */
+.reg-journey-head{max-width:560px;margin-bottom:60px}
+.reg-journey-head h2{font-size:clamp(1.6rem,3.2vw,2.2rem);font-weight:700;letter-spacing:-.02em;margin-bottom:12px}
+.reg-journey-head p{color:var(--l-text2);font-size:1rem;line-height:1.6}
+.reg-journey{display:flex;flex-direction:column}
+.reg-jstep{position:relative;display:grid;grid-template-columns:150px 1fr;align-items:start;padding:38px 0;border-top:1px solid var(--l-border)}
+.reg-jstep:last-child{border-bottom:1px solid var(--l-border)}
+.reg-jstep .reg-jnum-bg{position:absolute;left:-6px;top:50%;transform:translateY(-50%);font-family:var(--l-head);font-size:7.5rem;font-weight:700;line-height:1;color:transparent;-webkit-text-stroke:1px rgba(167,139,250,.16);z-index:0;user-select:none}
+.reg-jlabel{position:relative;z-index:1;color:var(--l-accent2);font-family:var(--l-head);font-weight:700;font-size:.85rem;letter-spacing:.05em;padding-top:4px}
+.reg-jbody{position:relative;z-index:1;max-width:560px}
+.reg-jbody h3{font-size:1.2rem;font-weight:700;margin-bottom:10px;letter-spacing:-.01em}
+.reg-jbody p{color:var(--l-text2);font-size:.95rem;line-height:1.7}
+
+/* Feature list — 2 column */
+.reg-feat-head{max-width:560px;margin-bottom:48px}
+.reg-feat-head h2{font-size:clamp(1.6rem,3.2vw,2.2rem);font-weight:700;letter-spacing:-.02em;margin-bottom:12px}
+.reg-feat-head p{color:var(--l-text2);font-size:1rem;line-height:1.6}
+.reg-feat-list{display:grid;grid-template-columns:1fr 1fr;gap:36px 48px}
+.reg-feat-item{display:flex;gap:16px;padding:22px 0;border-top:1px solid var(--l-border)}
+.reg-feat-item .reg-feat-mark{flex-shrink:0;width:30px;height:30px;border-radius:8px;background:rgba(124,58,237,.14);color:var(--l-accent2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;font-family:var(--l-head)}
+.reg-feat-item h3{font-size:1rem;font-weight:700;margin-bottom:6px}
+.reg-feat-item p{color:var(--l-text2);font-size:.88rem;line-height:1.6}
+
+/* CTA banner */
+.reg-cta{background:linear-gradient(135deg,var(--l-card),var(--l-card2));border:1px solid var(--l-border);border-radius:22px;padding:60px 40px;text-align:center;margin:0 24px}
+.reg-cta h2{font-size:clamp(1.4rem,2.8vw,1.9rem);font-weight:700;letter-spacing:-.02em;margin-bottom:12px}
+.reg-cta p{color:var(--l-text2);margin-bottom:28px;font-size:.98rem}
+
+/* Divider into live app */
+.reg-divider{display:flex;align-items:center;gap:16px;max-width:1120px;margin:0 auto;padding:64px 24px 28px;color:var(--l-text2);font-size:.72rem;font-weight:700;letter-spacing:.13em;font-family:var(--l-head)}
+.reg-divider::before,.reg-divider::after{content:'';flex:1;height:1px;background:var(--l-border)}
+
+/* Responsive */
+@media(max-width:860px){
+  .reg-hero-grid{grid-template-columns:1fr}
+  .reg-cert-stage{min-height:auto;padding-top:20px}
+  .reg-jstep{grid-template-columns:1fr;gap:10px}
+  .reg-jstep .reg-jnum-bg{position:static;transform:none;font-size:3.2rem;margin-bottom:-14px}
+  .reg-feat-list{grid-template-columns:1fr}
+  .reg-cta{margin:0 16px;padding:40px 22px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     Landing Page — Numbered Credential Journey
+     ═══════════════════════════════════════════════ -->
+<div class="reg-landing">
+
+  <nav class="reg-nav">
+    <div class="reg-wrap">
+      <div class="reg-brand"><span class="reg-brand-seal">📜</span> BOT Certificates</div>
+      <button class="reg-launch" onclick="document.getElementById('appSection').scrollIntoView({behavior:'smooth'})">Launch App</button>
+    </div>
+  </nav>
+
+  <section class="reg-hero">
+    <div class="reg-wrap reg-hero-grid">
+      <div>
+        <div class="reg-kicker">ON-CHAIN CREDENTIALING</div>
+        <h1>Certificates <em>nobody can forge</em>, verified by anyone in seconds</h1>
+        <p class="reg-sub">Issue, share, and verify tamper-proof certificates recorded directly on-chain. No central authority to trust, no paperwork to chase — just a certificate ID and a permanent record.</p>
+        <div class="reg-hero-ctas">
+          <button class="reg-btn-primary" onclick="document.getElementById('appSection').scrollIntoView({behavior:'smooth'})">Launch App</button>
+          <button class="reg-btn-ghost" onclick="document.getElementById('reg-journey').scrollIntoView({behavior:'smooth'})">See how it works</button>
+        </div>
+      </div>
+      <div class="reg-cert-stage">
+        <div class="reg-cert-card">
+          <div class="reg-cert-chip">
+            <div class="reg-seal">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+          <div class="reg-cert-eyebrow">CERTIFICATE OF COMPLETION</div>
+          <div class="reg-cert-title">Advanced Smart Contract Auditing</div>
+          <div class="reg-cert-id">ID · 0x8f3a…c19e</div>
+          <div class="reg-cert-foot">
+            <span class="reg-cert-status">● VERIFIED</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="reg-journey">
+    <div class="reg-wrap">
+      <div class="reg-journey-head">
+        <div class="reg-tag">HOW IT WORKS</div>
+        <h2>One record, three moments</h2>
+        <p>Every certificate on BOT Chain moves through the same lifecycle — issued, verified, and, if ever needed, revoked. All of it recorded on-chain.</p>
+      </div>
+      <div class="reg-journey">
+        <div class="reg-jstep">
+          <div class="reg-jnum-bg">01</div>
+          <div class="reg-jlabel">ISSUE</div>
+          <div class="reg-jbody">
+            <h3>An approved issuer mints the certificate</h3>
+            <p>A verified organization writes the recipient, title, and details of a credential directly to the registry contract. The record is permanent from the moment it's created.</p>
+          </div>
+        </div>
+        <div class="reg-jstep">
+          <div class="reg-jnum-bg">02</div>
+          <div class="reg-jlabel">VERIFY</div>
+          <div class="reg-jbody">
+            <h3>Anyone checks it against the chain</h3>
+            <p>The recipient shares their certificate ID. An employer, a school, or a stranger can look it up and see its authenticity and current status instantly — no login, no intermediary.</p>
+          </div>
+        </div>
+        <div class="reg-jstep">
+          <div class="reg-jnum-bg">03</div>
+          <div class="reg-jlabel">REVOKE</div>
+          <div class="reg-jbody">
+            <h3>The issuer can revoke it, on-chain</h3>
+            <p>If a certificate was issued in error or needs to be withdrawn, the original issuer can revoke it. The change is recorded and reflected in every future verification.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="reg-wrap">
+      <div class="reg-feat-head">
+        <div class="reg-tag">WHY IT HOLDS UP</div>
+        <h2>Built so a credential stays honest</h2>
+      </div>
+      <div class="reg-feat-list">
+        <div class="reg-feat-item">
+          <div class="reg-feat-mark">01</div>
+          <div><h3>Tamper-proof by design</h3><p>Every certificate is written to the blockchain — immutable, timestamped, and permanently auditable by anyone.</p></div>
+        </div>
+        <div class="reg-feat-item">
+          <div class="reg-feat-mark">02</div>
+          <div><h3>Instant public verification</h3><p>No account, approval, or intermediary required — a certificate ID is all it takes to confirm authenticity.</p></div>
+        </div>
+        <div class="reg-feat-item">
+          <div class="reg-feat-mark">03</div>
+          <div><h3>Issuer-controlled revocation</h3><p>Issuers keep the ability to revoke a certificate on-chain if it was granted in error.</p></div>
+        </div>
+        <div class="reg-feat-item">
+          <div class="reg-feat-mark">04</div>
+          <div><h3>Portable by nature</h3><p>A certificate lives on-chain, not in one company's database — it can be shared and checked anywhere, indefinitely.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="reg-cta">
+    <h2>Ready to issue your first certificate?</h2>
+    <p>Connect your wallet and start issuing verifiable, on-chain credentials in minutes.</p>
+    <button class="reg-btn-primary" onclick="document.getElementById('appSection').scrollIntoView({behavior:'smooth'})">Launch App</button>
+  </div>
+
+  <div class="reg-divider">LIVE APPLICATION</div>
+</div>
+
+<div id="appSection">
+
+<header>
+  <div class="container header-inner">
+    <div class="logo">
+      <div class="logo-icon">📜</div>
+      BOT Certificate Registry
+    </div>
+    <div class="header-controls">
+      <button class="btn btn-primary" id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+      <div class="wallet-addr" id="walletAddr" style="display:none"></div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Certificates Issued</div></div>
+    <div class="stat-card"><div class="stat-value" id="statValid">0</div><div class="stat-label">Valid Certificates</div></div>
+    <div class="stat-card"><div class="stat-value" id="statRevoked">0</div><div class="stat-label">Revoked</div></div>
+    <div class="stat-card"><div class="stat-value" id="statIssuers">0</div><div class="stat-label">Registered Issuers</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('issue')">Issue Certificate</div>
+    <div class="tab" onclick="switchTab('verify')">Verify</div>
+    <div class="tab" onclick="switchTab('certs')">Certificates</div>
+    <div class="tab" onclick="switchTab('issuers')">Manage Issuers</div>
+    <div class="tab" onclick="switchTab('history')">Transactions</div>
+  </div>
+
+  <!-- Issue Certificate -->
+  <div class="tab-content active" id="tab-issue">
+    <div class="card">
+      <h3>📝 Issue New Certificate</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Recipient Address</label>
+          <input id="issueRecipient" placeholder="0x...">
+        </div>
+        <div class="form-group">
+          <label>Certificate Title</label>
+          <input id="issueTitle" placeholder="e.g. Blockchain Development">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Details</label>
+        <textarea id="issueDetails" placeholder="Certificate details..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>IPFS Hash (optional)</label>
+        <input id="issueIpfs" placeholder="QmXyz...">
+      </div>
+      <button class="btn btn-primary" id="issueBtn" onclick="issueCertificate()">Issue Certificate</button>
+    </div>
+  </div>
+
+  <!-- Verify -->
+  <div class="tab-content" id="tab-verify">
+    <div class="card">
+      <h3>🔍 Verify Certificate</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Certificate ID</label>
+          <input id="verifyId" type="number" placeholder="Enter certificate ID" min="1">
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary" onclick="verifyCertificate()">Verify</button>
+        </div>
+      </div>
+    </div>
+    <div id="verifyResult"></div>
+  </div>
+
+  <!-- Certificates List -->
+  <div class="tab-content" id="tab-certs">
+    <div class="search-box">
+      <input id="certSearch" placeholder="Search by title, recipient, or ID..." oninput="filterCerts()">
+    </div>
+    <div id="certsList"></div>
+  </div>
+
+  <!-- Manage Issuers -->
+  <div class="tab-content" id="tab-issuers">
+    <div class="card">
+      <h3>➕ Add Issuer</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Issuer Address</label>
+          <input id="issuerAddr" placeholder="0x...">
+        </div>
+        <div class="form-group">
+          <label>Issuer Name</label>
+          <input id="issuerName" placeholder="e.g. BOT University">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addIssuer()">Add Issuer</button>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>📋 Registered Issuers</h3>
+      <div id="issuersList"></div>
+    </div>
+  </div>
+
+  <!-- Transaction History -->
+  <div class="tab-content" id="tab-history">
+    <div class="card">
+      <h3>📜 Transaction History</h3>
+      <div id="txHistory"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+</div><!-- /#appSection -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
+<script>
+// ─── Config ──────────────────────────────────────
+const CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+const ABI = [
+  "function addIssuer(address issuerAddress, string name) external",
+  "function removeIssuer(address issuerAddress) external",
+  "function issueCertificate(address recipient, string title, string details, string ipfsHash) external returns (uint256)",
+  "function revokeCertificate(uint256 certId) external",
+  "function verifyCertificate(uint256 certId) external view returns (bool exists, bool valid, address issuer, address recipient, string title, string details, string ipfsHash, uint256 issuedAt, bool revoked)",
+  "function getCertificate(uint256 certId) external view returns (tuple(uint256 id, address issuer, address recipient, string title, string details, string ipfsHash, uint256 issuedAt, bool revoked))",
+  "function getCertificatesByRecipient(address recipient) external view returns (uint256[])",
+  "function isIssuer(address addr) external view returns (bool)",
+  "function getIssuerName(address addr) external view returns (string)",
+  "function getCertificateCount() external view returns (uint256)",
+  "function pause() external",
+  "function unpause() external",
+  "function owner() external view returns (address)",
+  "event CertificateIssued(uint256 indexed id, address indexed issuer, address indexed recipient, string title)",
+  "event CertificateRevoked(uint256 indexed id)",
+  "event IssuerAdded(address indexed issuerAddress, string name)",
+  "event IssuerRemoved(address indexed issuerAddress)"
+];
+
+// Active network: BOT Chain Testnet (968)
+const BOT_CHAIN = {
+  chainId: "0x3C8",
+  chainName: "BOT Chain Testnet",
+  nativeCurrency: { name: "BOT", symbol: "BOT", decimals: 18 },
+  rpcUrls: ["https://rpc.bohr.life"],
+  blockExplorerUrls: ["https://scan.bohr.life/"]
+};
+// Mainnet values (BOT Chain, 677) — swap in when moving off testnet:
+// const BOT_CHAIN = {
+//   chainId: "0x2A5",
+//   chainName: "BOT Chain",
+//   nativeCurrency: { name: "BOT", symbol: "BOT", decimals: 18 },
+//   rpcUrls: ["https://rpc.botchain.ai"],
+//   blockExplorerUrls: ["https://scan.botchain.ai"]
+// };
+
+// ─── State ───────────────────────────────────────
+let isConnected = false;
+let provider = null;
+let signer = null;
+let contract = null;
+let userAddress = "";
+let contractDeployed = CONTRACT_ADDRESS !== "0x0000000000000000000000000000000000000000";
+
+// In-session record of on-chain actions taken through this UI
+let certsCache = [];
+let issuersCache = [];
+let txHistory = [];
+
+// ─── Init ────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => { refreshUI(); });
+
+// ─── Wallet ──────────────────────────────────────
+async function connectWallet() {
+  if (isConnected) return;
+  if (typeof window.ethereum === "undefined") {
+    showToast("MetaMask not detected. Please install MetaMask.", "error");
+    return;
+  }
+  try {
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    // Switch to (or add) the BOT Chain network
+    try {
+      await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: BOT_CHAIN.chainId }] });
+    } catch (switchErr) {
+      // 4902 = chain not added yet
+      if (switchErr.code === 4902 || (switchErr.data && switchErr.data.originalError && switchErr.data.originalError.code === 4902)) {
+        try {
+          await window.ethereum.request({ method: "wallet_addEthereumChain", params: [BOT_CHAIN] });
+        } catch (addErr) { /* user may decline; continue with whatever network is active */ }
+      }
+    }
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
+    userAddress = await signer.getAddress();
+    contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    isConnected = true;
+    document.getElementById("connectBtn").style.display = "none";
+    document.getElementById("walletAddr").style.display = "";
+    document.getElementById("walletAddr").textContent = shortAddr(userAddress);
+    showToast("Wallet connected!", "success");
+    await refreshUI();
+  } catch (e) {
+    showToast("Connection failed: " + e.message, "error");
+  }
+}
+
+// ─── Issue Certificate ───────────────────────────
+async function issueCertificate() {
+  const recipient = document.getElementById("issueRecipient").value.trim();
+  const title = document.getElementById("issueTitle").value.trim();
+  const details = document.getElementById("issueDetails").value.trim();
+  const ipfs = document.getElementById("issueIpfs").value.trim();
+  if (!recipient || !title) { showToast("Recipient and title are required.", "error"); return; }
+  if (!recipient.match(/^0x[a-fA-F0-9]{40}$/)) { showToast("Invalid address format.", "error"); return; }
+
+  if (!requireLiveContract()) return;
+
+  const btn = document.getElementById("issueBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Issuing...';
+
+  try {
+    const tx = await contract.issueCertificate(recipient, title, details, ipfs);
+    showToast("Transaction submitted...", "info");
+    await tx.wait();
+    addTx("Certificate Issued", title, tx.hash);
+    showToast("Certificate issued on-chain!", "success");
+    document.getElementById("issueRecipient").value = "";
+    document.getElementById("issueTitle").value = "";
+    document.getElementById("issueDetails").value = "";
+    document.getElementById("issueIpfs").value = "";
+    await refreshUI();
+  } catch (e) {
+    showToast("Error: " + (e.reason || e.message), "error");
+  }
+  btn.disabled = false;
+  btn.innerHTML = "Issue Certificate";
+}
+
+// ─── Verify ──────────────────────────────────────
+async function verifyCertificate() {
+  const id = parseInt(document.getElementById("verifyId").value);
+  if (!id || id < 1) { showToast("Enter a valid certificate ID.", "error"); return; }
+
+  if (!isConnected || !contract) {
+    document.getElementById("verifyResult").innerHTML = '<div class="card"><div class="empty"><div class="empty-icon">🔌</div>Connect your wallet to verify certificates.</div></div>';
+    return;
+  }
+  if (!contractDeployed) {
+    document.getElementById("verifyResult").innerHTML = '<div class="card"><div class="empty"><div class="empty-icon">📭</div>Deploy contract to see live data.</div></div>';
+    return;
+  }
+
+  const container = document.getElementById("verifyResult");
+  container.innerHTML = '<div class="card" style="text-align:center"><span class="spinner"></span> Verifying...</div>';
+
+  try {
+    let result;
+    const v = await contract.verifyCertificate(id);
+    if (!v.exists) { result = { exists: false }; }
+    else {
+      let iName = "";
+      try { iName = await contract.getIssuerName(v.issuer); } catch(e){}
+      result = { exists: true, valid: v.valid, issuer: v.issuer, issuerName: iName, recipient: v.recipient, title: v.title, details: v.details, ipfsHash: v.ipfsHash, issuedAt: Number(v.issuedAt), revoked: v.revoked };
+    }
+
+    if (!result.exists) {
+      container.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon">❌</div>Certificate #${id} not found.</div></div>`;
+    } else {
+      container.innerHTML = `
+        <div class="cert-card" style="border-color:${result.valid ? 'var(--success)' : 'var(--danger)'}">
+          <div class="cert-header">
+            <div><span class="cert-id">Certificate #${id}</span><div class="cert-title">${esc(result.title)}</div></div>
+            <span class="badge ${result.valid ? 'badge-valid' : 'badge-revoked'}">${result.valid ? '✓ VALID' : '✗ REVOKED'}</span>
+          </div>
+          <p style="margin-bottom:12px;color:var(--text-dim);font-size:.9rem">${esc(result.details)}</p>
+          <div class="cert-meta">
+            <span>👤 Issuer: ${result.issuerName || shortAddr(result.issuer)}</span>
+            <span>📧 Recipient: ${shortAddr(result.recipient)}</span>
+            <span>📅 Issued: ${formatDate(result.issuedAt)}</span>
+            ${result.ipfsHash ? `<span>📎 IPFS: ${result.ipfsHash.substring(0, 16)}...</span>` : ''}
+          </div>
+        </div>`;
+    }
+  } catch (e) {
+    container.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon">⚠️</div>${esc(e.message)}</div></div>`;
+  }
+}
+
+// ─── Add Issuer ──────────────────────────────────
+async function addIssuer() {
+  const addr = document.getElementById("issuerAddr").value.trim();
+  const name = document.getElementById("issuerName").value.trim();
+  if (!addr || !name) { showToast("Address and name required.", "error"); return; }
+  if (!addr.match(/^0x[a-fA-F0-9]{40}$/)) { showToast("Invalid address.", "error"); return; }
+
+  if (!requireLiveContract()) return;
+
+  try {
+    const tx = await contract.addIssuer(addr, name);
+    showToast("Transaction submitted...", "info");
+    await tx.wait();
+    addTx("Issuer Added", name, tx.hash);
+    if (!issuersCache.find(i => i.address.toLowerCase() === addr.toLowerCase())) {
+      issuersCache.push({ address: addr, name });
+    }
+    showToast(`Issuer "${name}" added on-chain!`, "success");
+    document.getElementById("issuerAddr").value = "";
+    document.getElementById("issuerName").value = "";
+    await refreshUI();
+  } catch (e) {
+    showToast("Error: " + (e.reason || e.message), "error");
+  }
+}
+
+// ─── Remove Issuer ───────────────────────────────
+async function removeIssuer(addr) {
+  if (!confirm("Remove this issuer?")) return;
+  if (!requireLiveContract()) return;
+  try {
+    const tx = await contract.removeIssuer(addr);
+    await tx.wait();
+    addTx("Issuer Removed", shortAddr(addr), tx.hash);
+    issuersCache = issuersCache.filter(i => i.address.toLowerCase() !== addr.toLowerCase());
+    showToast("Issuer removed on-chain!", "success");
+    await refreshUI();
+  } catch (e) {
+    showToast("Error: " + (e.reason || e.message), "error");
+  }
+}
+
+// ─── Revoke Certificate ──────────────────────────
+async function revokeCert(id) {
+  if (!confirm(`Revoke certificate #${id}?`)) return;
+  if (!requireLiveContract()) return;
+  try {
+    const tx = await contract.revokeCertificate(id);
+    await tx.wait();
+    addTx("Certificate Revoked", `#${id}`, tx.hash);
+    showToast(`Certificate #${id} revoked on-chain!`, "success");
+    await refreshUI();
+  } catch (e) {
+    showToast("Error: " + (e.reason || e.message), "error");
+  }
+}
+
+// ─── UI Refresh ──────────────────────────────────
+function requireLiveContract() {
+  if (!isConnected || !contract) {
+    showToast("Connect your wallet first.", "error");
+    return false;
+  }
+  if (!contractDeployed) {
+    showToast("Contract not deployed yet.", "error");
+    return false;
+  }
+  return true;
+}
+
+function setStats(total, valid, revoked, issuers) {
+  document.getElementById("statTotal").textContent = total;
+  document.getElementById("statValid").textContent = valid;
+  document.getElementById("statRevoked").textContent = revoked;
+  document.getElementById("statIssuers").textContent = issuers;
+}
+
+async function refreshUI() {
+  if (!isConnected || !contract) {
+    // Not connected yet — clean placeholder state, no fake data
+    setStats("—", "—", "—", "—");
+    certsCache = [];
+    renderCerts([]);
+    renderIssuers();
+    renderTxHistory();
+    return;
+  }
+  if (!contractDeployed) {
+    setStats("—", "—", "—", "—");
+    certsCache = [];
+    document.getElementById("certsList").innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Deploy contract to see live data.</div>';
+    document.getElementById("issuersList").innerHTML = '<div class="empty">Deploy contract to see live data.</div>';
+    renderTxHistory();
+    return;
+  }
+  await refreshLive();
+}
+
+async function refreshLive() {
+  try {
+    const count = Number(await contract.getCertificateCount());
+    const certs = [];
+    for (let id = 1; id <= count; id++) {
+      try {
+        const c = await contract.getCertificate(id);
+        certs.push({
+          id: Number(c.id),
+          issuer: c.issuer,
+          recipient: c.recipient,
+          title: c.title,
+          details: c.details,
+          ipfsHash: c.ipfsHash,
+          issuedAt: Number(c.issuedAt),
+          revoked: c.revoked
+        });
+      } catch (e) { /* skip unreadable entry */ }
+    }
+    certsCache = certs;
+    const valid = certs.filter(c => !c.revoked);
+    const revoked = certs.filter(c => c.revoked);
+    setStats(certs.length, valid.length, revoked.length, issuersCache.length || "—");
+    renderCerts(certs);
+    renderIssuers();
+    renderTxHistory();
+  } catch (e) {
+    showToast("Failed to load contract data: " + (e.reason || e.message), "error");
+  }
+}
+
+function renderCerts(certs) {
+  const container = document.getElementById("certsList");
+  if (!certs.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">📜</div>No certificates yet.</div>';
+    return;
+  }
+  container.innerHTML = certs.map(c => {
+    const issuerInfo = issuersCache.find(i => i.address.toLowerCase() === c.issuer.toLowerCase());
+    const canRevoke = !c.revoked && userAddress && (c.issuer.toLowerCase() === userAddress.toLowerCase());
+    return `
+      <div class="cert-card">
+        <div class="cert-header">
+          <div><span class="cert-id">#${c.id}</span><div class="cert-title">${esc(c.title)}</div></div>
+          <span class="badge ${c.revoked ? 'badge-revoked' : 'badge-valid'}">${c.revoked ? 'REVOKED' : 'VALID'}</span>
+        </div>
+        <p style="color:var(--text-dim);font-size:.9rem;margin-bottom:10px">${esc(c.details)}</p>
+        <div class="cert-meta">
+          <span>👤 ${issuerInfo ? esc(issuerInfo.name) : shortAddr(c.issuer)}</span>
+          <span>📧 ${shortAddr(c.recipient)}</span>
+          <span>📅 ${formatDate(c.issuedAt)}</span>
+          ${c.ipfsHash ? `<span>📎 ${c.ipfsHash.substring(0,16)}...</span>` : '<span></span>'}
+        </div>
+        ${canRevoke ? `<div style="margin-top:12px"><button class="btn btn-danger btn-sm" onclick="revokeCert(${c.id})">Revoke</button></div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function renderIssuers() {
+  const container = document.getElementById("issuersList");
+  if (!issuersCache.length) {
+    container.innerHTML = '<div class="empty">No issuers registered yet in this session.</div>';
+    return;
+  }
+  container.innerHTML = issuersCache.map(i => `
+    <div class="tx-item">
+      <div><span class="tx-action">${esc(i.name)}</span><br><span class="tx-hash">${shortAddr(i.address)}</span></div>
+      <button class="btn btn-outline btn-sm" onclick="removeIssuer('${i.address}')">Remove</button>
+    </div>`).join('');
+}
+
+function renderTxHistory() {
+  const container = document.getElementById("txHistory");
+  if (!txHistory.length) {
+    container.innerHTML = '<div class="empty">No transactions yet.</div>';
+    return;
+  }
+  container.innerHTML = [...txHistory].reverse().map(tx => `
+    <div class="tx-item">
+      <div><span class="tx-action">${esc(tx.action)}</span> <span style="color:var(--text-dim)">${esc(tx.detail)}</span></div>
+      <div style="text-align:right"><div class="tx-hash">${tx.hash}</div><div class="tx-time">${formatTime(tx.time)}</div></div>
+    </div>`).join('');
+}
+
+function filterCerts() {
+  const q = document.getElementById("certSearch").value.toLowerCase();
+  const filtered = certsCache.filter(c =>
+    c.title.toLowerCase().includes(q) ||
+    c.recipient.toLowerCase().includes(q) ||
+    String(c.id).includes(q)
+  );
+  renderCerts(filtered);
+}
+
+// ─── Tabs ────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+  event.target.classList.add("active");
+  document.getElementById("tab-" + name).classList.add("active");
+}
+
+// ─── Helpers ─────────────────────────────────────
+function shortAddr(a) { return a ? a.substring(0,6) + "..." + a.substring(a.length-4) : ""; }
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function formatDate(ts) { return new Date(ts * 1000).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }); }
+function formatTime(ms) { return new Date(ms).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }); }
+function addTx(action, detail, hash) { txHistory.push({ action, detail, hash, time: Date.now() }); }
+
+function showToast(msg, type) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = `toast toast-${type} show`;
+  setTimeout(() => t.classList.remove("show"), 3500);
+}
+</script>
+</body>
+</html>
