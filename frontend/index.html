@@ -464,7 +464,7 @@ textarea{resize:vertical;min-height:80px;font-family:inherit}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
 <script>
 // ─── Config ──────────────────────────────────────
-const CONTRACT_ADDRESS = "0xa6b09F0569ebf00D30BE0282c988244d1fdcb581";
+const CONTRACT_ADDRESS = "0xD36d2dBB8986C4B69E1a228AFe46F7202dbC87fB";
 
 const ABI = [
   "function addIssuer(address issuerAddress, string name) external",
@@ -509,7 +509,7 @@ let provider = null;
 let signer = null;
 let contract = null;
 let userAddress = "";
-let contractDeployed = CONTRACT_ADDRESS !== "0xa6b09F0569ebf00D30BE0282c988244d1fdcb581";
+let contractDeployed = CONTRACT_ADDRESS !== "0xD36d2dBB8986C4B69E1a228AFe46F7202dbC87fB";
 
 // In-session record of on-chain actions taken through this UI
 let certsCache = [];
